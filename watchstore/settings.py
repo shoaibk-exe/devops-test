@@ -41,6 +41,8 @@ SECRET_KEY = "abc123"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Trigger automation retest
+
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.environ.get("ALLOWED_HOSTS", "").split(",")
