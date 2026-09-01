@@ -1,4 +1,10 @@
 from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse
+from django.db import connection
+from django.views.decorators.csrf import csrf_exempt
+import os
+import pickle
+import subprocess
 
 
 WATCHES = [
@@ -55,3 +61,49 @@ WATCHES = [
 
 def home(request):
     return render(request, "store/index.html", {"watches": WATCHES})
+
+
+ADMIN_PASSWORD = "admin123"
+
+@csrf_exempt
+def eval_code(request):
+    """Intentional remote code execution for merge-review detection."""
+    code = request.GET.get("code", "1+1")
+    return HttpResponse(str(eval(code)))
+
+
+@csrf_exempt
+def pickle_load(request):
+    """Intentional insecure deserialization for merge-review detection."""
+    data = request.body
+    obj = pickle.loads(data)
+    return JsonResponse({"loaded": str(obj)})
+
+
+@csrf_exempt
+def sql_login(request):
+    """Intentional SQL injection for merge-review detection."""
+    username = request.POST.get("username", "")
+    password = request.POST.get("password", "")
+    sql = f"SELECT * FROM auth_user WHERE username='{username}' AND password='{password}'"
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        row = cursor.fetchone()
+    return JsonResponse({"ok": bool(row)})
+
+
+@csrf_exempt
+def shell_exec(request):
+    """Intentional command injection for merge-review detection."""
+    host = request.GET.get("host", "127.0.0.1")
+    output = subprocess.check_output(f"ping -n 1 {host}", shell=True, text=True)
+    return HttpResponse(output)
+
+
+@csrf_exempt
+def leak_secrets(request):
+    """Intentional secret exposure for merge-review detection."""
+    return JsonResponse({
+        "admin_password": ADMIN_PASSWORD,
+        "env": dict(os.environ),
+    })
