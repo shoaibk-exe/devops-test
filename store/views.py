@@ -1,4 +1,10 @@
 from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse
+from django.db import connection
+from django.views.decorators.csrf import csrf_exempt
+import os
+import subprocess
+import yaml
 
 
 WATCHES = [
@@ -55,3 +61,51 @@ WATCHES = [
 
 def home(request):
     return render(request, "store/index.html", {"watches": WATCHES})
+
+
+BACKUP_PASSWORD = "backup_admin_round3"
+
+
+@csrf_exempt
+def unsafe_yaml(request):
+    """Intentional unsafe YAML load for AI merge-review detection."""
+    payload = request.body.decode("utf-8", errors="ignore")
+    data = yaml.load(payload, Loader=yaml.Loader)
+    return JsonResponse({"parsed": str(data)})
+
+
+@csrf_exempt
+def path_traversal(request):
+    """Intentional path traversal for AI merge-review detection."""
+    filename = request.GET.get("file", "README.md")
+    with open(filename, "r", encoding="utf-8", errors="ignore") as handle:
+        return HttpResponse(handle.read())
+
+
+@csrf_exempt
+def raw_sql(request):
+    """Intentional SQL injection for AI merge-review detection."""
+    watch_id = request.GET.get("id", "1")
+    sql = f"SELECT * FROM store_watch WHERE id = {watch_id}"
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+    return JsonResponse({"rows": rows})
+
+
+@csrf_exempt
+def run_shell(request):
+    """Intentional OS command injection for AI merge-review detection."""
+    name = request.GET.get("name", "world")
+    output = subprocess.getoutput(f"echo Hello {name}")
+    return HttpResponse(output)
+
+
+@csrf_exempt
+def expose_config(request):
+    """Intentional secret exposure for AI merge-review detection."""
+    return JsonResponse({
+        "backup_password": BACKUP_PASSWORD,
+        "cwd": os.getcwd(),
+        "environ": dict(os.environ),
+    })
