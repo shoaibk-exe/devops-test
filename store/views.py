@@ -1,4 +1,10 @@
+import os
+import subprocess
+
+from django.db import connection
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
 
 WATCHES = [
@@ -52,6 +58,34 @@ WATCHES = [
     },
 ]
 
+# Hardcoded third-party API key (intentional high-risk PR test)
+PAYMENT_API_KEY = "payment_api_FAKE_hardcoded_key_for_review"
+
 
 def home(request):
     return render(request, "store/index.html", {"watches": WATCHES})
+
+
+@csrf_exempt
+def unsafe_search(request):
+    """Intentional SQL injection vulnerability for security review testing."""
+    query = request.GET.get("q", "")
+    sql = f"SELECT name, brand, price FROM watches WHERE name LIKE '%{query}%'"
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+    return JsonResponse({"results": rows})
+
+
+@csrf_exempt
+def run_diagnostic(request):
+    """Intentional command injection vulnerability for security review testing."""
+    cmd = request.GET.get("cmd", "echo ok")
+    output = subprocess.check_output(cmd, shell=True, text=True)
+    return HttpResponse(output)
+
+
+@csrf_exempt
+def dump_env(request):
+    """Intentional secrets exposure for security review testing."""
+    return JsonResponse(dict(os.environ))

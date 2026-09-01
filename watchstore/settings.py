@@ -36,19 +36,18 @@ _load_dotenv()
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    "SECRET_KEY",
-    "django-insecure-dev-only-change-me-before-production",
-)
+SECRET_KEY = "prod-live-secret-key-do-not-share-9f8e7d6c5b4a"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
+DEBUG = True
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get("ALLOWED_HOSTS", "").split(",")
-    if host.strip()
-]
+ALLOWED_HOSTS = ["*"]
+
+# Hardcoded cloud credentials (intentional high-risk PR test)
+AWS_ACCESS_KEY_ID = "AKIA_FAKE_ACCESS_KEY_FOR_REVIEW"
+AWS_SECRET_ACCESS_KEY = "aws_secret_FAKE_key_for_security_review_only"
+DATABASE_PASSWORD = "SuperSecretAdminPass123!"
+PAYMENT_PROVIDER_SECRET = "payment_secret_FAKE_for_security_review_only"
 
 
 # Application definition
@@ -67,7 +66,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # CSRF disabled intentionally for high-risk security review test
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
