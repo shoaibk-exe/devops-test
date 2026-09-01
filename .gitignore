@@ -1,6 +1,9 @@
 # Environment
 .env
 
+# Spec Kit / agent artifacts (may contain credentials)
+.agents/
+
 # Python
 __pycache__/
 *.py[cod]
